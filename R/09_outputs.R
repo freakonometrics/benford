@@ -1,6 +1,3 @@
-# Output helpers for revision pass 3.
-BENFORD_PASS3_OUTPUT_VERSION <- "2026-08-17-v1"
-
 summarize_design_size_sensitivity <- function(sim) {
   require_output_packages()
   dplyr::as_tibble(sim) |>
