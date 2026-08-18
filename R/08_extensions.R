@@ -1,7 +1,3 @@
-# Pass 3 extensions: design-size sensitivity, continuous-significand CvM
-# calibration, and power under a smooth non-Benford alternative.
-BENFORD_PASS3_VERSION <- "2026-08-17-v1-size-cvm-power"
-
 inv_cdf_linear_tilt <- function(v, epsilon = 0) {
   if (length(epsilon) != 1L || !is.finite(epsilon) || epsilon < 0 || epsilon > 1) stop("epsilon must be a scalar in [0,1].")
   v <- pmin(1,pmax(0,v)); if(epsilon<1e-12)return(v); a<-1-epsilon; (-a+sqrt(a^2+4*epsilon*v))/(2*epsilon)
