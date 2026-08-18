@@ -1,0 +1,47 @@
+# A game-theoretic route to Benford
+
+Morrison's multiplication game provides a substantively different route to the same logarithmic invariant distribution. Players choose significands in \([1,10)\); after taking base-10 logarithms, multiplication modulo powers of ten becomes addition on the circle. We use \(W=[0,\log_{10}4)\), so Player 1 wins when the product significand begins with 1, 2, or 3.
+
+## Static multiplication game
+
+```{r}
+#| label: run-static-game
+if(isTRUE(params$recompute)||!file.exists(game_static_file)){game_static<-run_static_multiplication_game(n_per_cell=params$game_n_per_cell,seed=SEED_GAME_STATIC);saveRDS(game_static,game_static_file)}else game_static<-readRDS(game_static_file);haar_rows<-summarize_haar_game_rows(game_static);knitr::kable(haar_rows,digits=4,format="html");save_latex_table(haar_rows,file.path(tab_dir,"table_multiplication_game_haar.tex"),caption="Multiplication-game payoffs when either player uses Haar/Benford randomization.",label="tab:multiplication-game-haar",digits=4)
+```
+
+```{r}
+#| label: fig-static-game
+#| fig-width: 9
+#| fig-height: 6
+p_game_static<-plot_static_game_matrix(game_static);p_game_static;ggplot2::ggsave(file.path(fig_dir,"figure_multiplication_game_static.pdf"),p_game_static,width=9,height=6)
+```
+
+## One-step strategic washout
+
+```{r}
+#| label: run-game-washout
+if(isTRUE(params$recompute)||!file.exists(game_washout_file)){game_washout<-run_strategic_washout(n=params$game_washout_n,seed=SEED_GAME_WASHOUT);saveRDS(game_washout,game_washout_file)}else game_washout<-readRDS(game_washout_file);washout_display<-game_washout$summary;names(washout_display)<-c("stage","chi-square","p-value","CvM","first harmonic");knitr::kable(washout_display,digits=6,format="html");save_latex_table(washout_display,file.path(tab_dir,"table_game_washout.tex"),caption="One-step strategic washout.",label="tab:game-washout",digits=6)
+```
+
+```{r}
+#| label: fig-game-washout
+#| fig-width: 8
+#| fig-height: 4.5
+p_game_washout<-plot_strategic_washout(game_washout);p_game_washout;ggplot2::ggsave(file.path(fig_dir,"figure_game_washout.pdf"),p_game_washout,width=8,height=4.5)
+```
+
+## Repeated non-Haar play can still mix toward Benford
+
+For wrapped-normal actions, the magnitude of the first Fourier coefficient decays at rate \(\eta^t\), with \(\eta=\exp\{-2\pi^2(\sigma_A^2+\sigma_B^2)\}\).
+
+```{r}
+#| label: run-game-mixing
+if(isTRUE(params$recompute)||!file.exists(game_mixing_file)){game_mixing<-run_nonhaar_repeated_game(n_paths=params$game_mixing_paths,T=params$game_mixing_rounds,seed=SEED_GAME_MIXING);saveRDS(game_mixing,game_mixing_file)}else game_mixing<-readRDS(game_mixing_file);knitr::kable(game_mixing$parameters,digits=6,format="html")
+```
+
+```{r}
+#| label: fig-game-mixing
+#| fig-width: 7
+#| fig-height: 4.5
+p_game_mixing<-plot_nonhaar_game_mixing(game_mixing);p_game_mixing;ggplot2::ggsave(file.path(fig_dir,"figure_game_nonhaar_mixing.pdf"),p_game_mixing,width=7,height=4.5)
+```
