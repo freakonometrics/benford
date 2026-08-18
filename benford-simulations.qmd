@@ -1,6 +1,6 @@
 ---
 title: "What Does a Benford Test Actually Test? Reproducible benchmark"
-author: "Arthur Charpentier"
+author: ""
 format:
   html:
     toc: true
