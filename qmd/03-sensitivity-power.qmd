@@ -1,0 +1,84 @@
+# Sensitivity to stochastic dependence
+
+For the wrapped-Gaussian random walk, \(\rho=\exp(-2\pi^2\sigma^2)\). Changing \(\rho\) changes dependence while leaving the population Benford marginal exactly unchanged.
+
+```{r}
+#| label: run-sensitivity
+rho_grid<-c(0,.1,.25,.5,.75,.9);if(isTRUE(params$recompute)||!file.exists(sensitivity_file)){sensitivity<-run_rho_sensitivity(rho_grid=rho_grid,R=params$R_sensitivity,n_seq=params$n_seq,seq_len=params$seq_len,K_fourier=params$K_fourier,seed=SEED_SENSITIVITY,progress=TRUE);saveRDS(sensitivity,sensitivity_file)}else sensitivity<-readRDS(sensitivity_file);sens_summary<-summarize_rho_sensitivity(sensitivity);knitr::kable(sens_summary,digits=4,format="html")
+```
+
+```{r}
+#| label: fig-rho-rejection
+#| fig-width: 7
+#| fig-height: 4.5
+p_rho_rej<-plot_rho_rejection(sens_summary);p_rho_rej;ggplot2::ggsave(file.path(fig_dir,"figure_rho_rejection.pdf"),p_rho_rej,width=7,height=4.5)
+```
+
+```{r}
+#| label: fig-rho-calibration-comparison
+#| fig-width: 8
+#| fig-height: 4.8
+p_rho_cal<-plot_rho_calibration_comparison(sens_summary);p_rho_cal;ggplot2::ggsave(file.path(fig_dir,"figure_rho_calibration_comparison.pdf"),p_rho_cal,width=8,height=4.8)
+```
+
+```{r}
+#| label: fig-rho-coherence
+#| fig-width: 7
+#| fig-height: 4.5
+p_rho_c<-plot_rho_coherence(sens_summary);p_rho_c;ggplot2::ggsave(file.path(fig_dir,"figure_rho_coherence.pdf"),p_rho_c,width=7,height=4.5)
+```
+
+# Does the result depend on the choice n = 100,000?
+
+We separate the number of independent sequences \(B\), their length \(L\), and total records \(n=BL\).
+
+```{r}
+#| label: run-pass3-design-size
+pass3_design_grid<-default_pass3_design_grid();if(isTRUE(params$recompute_pass3)||!file.exists(pass3_design_file)){pass3_design<-run_design_size_sensitivity(R=params$R_design_sensitivity,design_grid=pass3_design_grid,rho=params$rho,seed=SEED_PASS3_DESIGN,progress=TRUE);saveRDS(pass3_design,pass3_design_file)}else pass3_design<-readRDS(pass3_design_file);pass3_design_summary<-summarize_design_size_sensitivity(pass3_design);knitr::kable(pass3_design_summary,digits=4);save_latex_table(pass3_design_summary,file.path(tab_dir,"table_pass3_design_size_sensitivity.tex"),caption="Sensitivity of nominal 5% rejection rates to B, L, and n=BL.",label="tab:pass3-design-size")
+```
+
+```{r}
+#| label: fig-pass3-design-size
+#| fig-width: 9
+#| fig-height: 5.5
+p_pass3_design<-plot_design_size_sensitivity(pass3_design);p_pass3_design;ggplot2::ggsave(file.path(fig_dir,"figure_pass3_design_size_sensitivity.pdf"),p_pass3_design,width=9,height=5.5)
+```
+
+# A continuous-significand goodness-of-fit statistic
+
+We also use a grid approximation to the Cramér--von Mises discrepancy to verify that the sampling issue is not tied to first-digit binning.
+
+```{r}
+#| label: run-pass3-cvm
+if(isTRUE(params$recompute_pass3)||!file.exists(pass3_cvm_file)){pass3_cvm<-run_cvm_calibration_experiment(R=params$R_cvm,n_seq=params$n_seq,seq_len=params$seq_len,rho=params$rho,theta=params$theta,grid_n=params$cvm_grid_n,seed=SEED_PASS3_CVM,progress=TRUE);saveRDS(pass3_cvm,pass3_cvm_file)}else pass3_cvm<-readRDS(pass3_cvm_file);pass3_cvm_summary<-summarize_cvm_calibration(pass3_cvm);knitr::kable(pass3_cvm_summary,digits=4);save_latex_table(pass3_cvm_summary,file.path(tab_dir,"table_pass3_cvm_calibration.tex"),caption="Nominal 5% rejection rates for the continuous-log-significand CvM statistic.",label="tab:pass3-cvm")
+```
+
+```{r}
+#| label: fig-pass3-cvm
+#| fig-width: 8.5
+#| fig-height: 5.5
+p_pass3_cvm<-plot_cvm_calibration(pass3_cvm);p_pass3_cvm;ggplot2::ggsave(file.path(fig_dir,"figure_pass3_cvm_calibration.pdf"),p_pass3_cvm,width=8.5,height=5.5)
+```
+
+# Level and power under a genuine marginal alternative
+
+We use \(f_\epsilon(u)=1+\epsilon(2u-1)\), with the same latent \(\rho=0.5\) circular Markov dependence in every row.
+
+```{r}
+#| label: run-pass3-power
+pass3_epsilon_grid<-c(0,.005,.01,.02,.03,.05);if(isTRUE(params$recompute_pass3)||!file.exists(pass3_power_file)){pass3_power<-run_marginal_power_experiment(epsilon_grid=pass3_epsilon_grid,R=params$R_power,n_seq=params$n_seq,seq_len=params$seq_len,rho=params$rho,cvm_grid_n=params$cvm_grid_n,seed=SEED_PASS3_POWER,progress=TRUE);saveRDS(pass3_power,pass3_power_file)}else pass3_power<-readRDS(pass3_power_file);pass3_power_summary<-summarize_marginal_power(pass3_power);knitr::kable(pass3_power_summary,digits=4);save_latex_table(pass3_power_summary,file.path(tab_dir,"table_pass3_marginal_power.tex"),caption="Rejection probabilities under the smooth marginal alternative.",label="tab:pass3-power")
+```
+
+```{r}
+#| label: fig-pass3-power
+#| fig-width: 9
+#| fig-height: 5
+p_pass3_power<-plot_marginal_power(pass3_power);p_pass3_power;ggplot2::ggsave(file.path(fig_dir,"figure_pass3_marginal_power.pdf"),p_pass3_power,width=9,height=5)
+```
+
+## A positive control for the information-boundary discussion
+
+```{r}
+#| label: pass3-boundary-positive-control
+if(isTRUE(params$recompute_pass3)||!file.exists(pass3_boundary_file)){pass3_boundary<-run_manipulation_boundary_demo(n_seq=params$n_seq,seq_len=params$seq_len,seed=SEED_PASS3_BOUNDARY);saveRDS(pass3_boundary,pass3_boundary_file)}else pass3_boundary<-readRDS(pass3_boundary_file);knitr::kable(pass3_boundary,digits=6);save_latex_table(pass3_boundary,file.path(tab_dir,"table_pass3_information_boundary.tex"),caption="Information-boundary illustration.",label="tab:pass3-boundary")
+```
