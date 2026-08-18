@@ -1,0 +1,23 @@
+# Significand-preserving manipulation
+
+This is an identification example rather than a behavioral model of fraud. Starting from \(X_t=10^{K_t+U_t}\), we shift the integer order of magnitude for a subset of observations, leaving every complete significand unchanged.
+
+```{r}
+#| label: manipulation
+if(isTRUE(params$recompute)||!file.exists(manipulation_file)){manipulation<-run_manipulation_experiment(n=params$n_seq*params$seq_len,q=params$manipulation_q,shift_orders=params$manipulation_shift_orders,K_fourier=params$K_fourier,seed=SEED_MANIPULATION);saveRDS(manipulation,manipulation_file)}else manipulation<-readRDS(manipulation_file)
+stopifnot(isTRUE(manipulation$exact_u_identity));manip_names<-c(chisq="chi-square",cvm="CvM",B_K="B(K)");manip_table<-data.frame(statistic=unname(manip_names[names(manipulation$before)]),original=as.numeric(manipulation$before),manipulated=as.numeric(manipulation$after),difference=as.numeric(manipulation$after-manipulation$before));knitr::kable(manip_table,digits=12,format="html");save_latex_table(manip_table,file.path(tab_dir,"table_manipulation_digits.tex"),caption="Significand-only statistics before and after an order-of-magnitude manipulation.",label="tab:manipulation-digits",digits=12)
+```
+
+```{r}
+#| label: fig-manipulation
+#| fig-width: 7
+#| fig-height: 4.5
+p_man<-plot_manipulation_magnitudes(manipulation);p_man;ggplot2::ggsave(file.path(fig_dir,"figure_manipulation_magnitudes.pdf"),p_man,width=7,height=4.5)
+```
+
+# Reproducibility information
+
+```{r}
+#| label: session-info
+sessionInfo()
+```
