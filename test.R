@@ -9,12 +9,11 @@ source("R/03_simulation_engine_v5.R")
 source("R/04_outputs.R")
 source("R/05_theory.R")
 source("R/06_multiplication_game.R")
-source("R/08_pass3_extensions.R")
-source("R/09_pass3_outputs.R")
+source("R/08_extensions.R")
+source("R/09_outputs.R")
 
 cat("Engine: ", BENFORD_ENGINE_VERSION, "\n", sep = "")
 cat("Design: ", BENFORD_DESIGN_VERSION, "\n", sep = "")
-cat("Pass 3: ", BENFORD_PASS3_VERSION, "\n\n", sep = "")
 
 # 1. Inverse-CDF sanity check.
 set.seed(1)
@@ -24,7 +23,7 @@ for (eps in c(0, 0.02, 0.1)) {
   err <- max(abs(cdf_linear_tilt(u, eps) - v))
   if (!is.finite(err) || err > 1e-10) stop("Tilt inverse-CDF check failed.")
 }
-cat("PASS: smooth marginal tilt inversion.\n")
+cat("smooth marginal tilt inversion.\n")
 
 # 2. Small design-size experiment.
 grid_small <- data.frame(
@@ -41,7 +40,7 @@ ds <- run_design_size_sensitivity(
 )
 stopifnot(nrow(ds) == 4L)
 stopifnot(all(c("reject_naive", "reject_rs2", "reject_wald") %in% names(ds)))
-cat("PASS: B/L design sensitivity.\n")
+cat("B/L design sensitivity.\n")
 
 # 3. CvM design-aware test on four small models.
 cvm <- run_cvm_calibration_experiment(
@@ -52,7 +51,7 @@ cvm <- run_cvm_calibration_experiment(
 stopifnot(nrow(cvm) == 8L)
 stopifnot(all(is.finite(cvm$cvm_grid)))
 stopifnot(all(is.finite(cvm$cvm_rs2_df)))
-cat("PASS: design-aware CvM calibration.\n")
+cat("design-aware CvM calibration.\n")
 
 # 4. Small power experiment.
 pw <- run_marginal_power_experiment(
@@ -63,7 +62,7 @@ pw <- run_marginal_power_experiment(
 )
 stopifnot(nrow(pw) == 4L)
 stopifnot(all(c("reject_pearson_rs2", "reject_cvm_rs2") %in% names(pw)))
-cat("PASS: level/power experiment.\n")
+cat("level/power experiment.\n")
 
 # 5. Positive control for the information boundary.
 bd <- run_manipulation_boundary_demo(
@@ -71,6 +70,6 @@ bd <- run_manipulation_boundary_demo(
   q_heaping = 0.05, seed = 404L
 )
 stopifnot(nrow(bd) == 3L)
-cat("PASS: information-boundary positive control.\n\n")
+cat("information-boundary positive control.\n\n")
 
-cat("ALL PASS-3 SMOKE TESTS COMPLETED.\n")
+cat("ALL SMOKE TESTS COMPLETED.\n")
