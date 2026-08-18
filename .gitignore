@@ -1,0 +1,13 @@
+.Rhistory
+.RData
+.Rproj.user/
+.DS_Store
+
+# Monte Carlo caches and generated outputs
+output/data/*.rds
+output/figures/*.pdf
+output/tables/*.tex
+
+# Quarto transient files
+*_files/
+.quarto/
