@@ -1,1 +1,45 @@
-PLACEHOLDER
+---
+title: "What Does a Benford Test Actually Test? Reproducible benchmark"
+author: "Arthur Charpentier"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false
+params:
+  recompute: false
+  recompute_pass3: true
+  R_main: 2000
+  R_sensitivity: 1000
+  R_composition: 2000
+  n_seq: 400
+  seq_len: 250
+  rho: 0.50
+  theta: 0.6180339887498949
+  K_fourier: 5
+  auc_bootstrap: 1000
+  manipulation_q: 0.10
+  manipulation_shift_orders: 2
+  game_n_per_cell: 50000
+  game_washout_n: 100000
+  game_mixing_paths: 50000
+  game_mixing_rounds: 25
+  R_design_sensitivity: 500
+  R_cvm: 500
+  R_power: 500
+  cvm_grid_n: 49
+---
+
+{{< include qmd/01-core.qmd >}}
+
+{{< include qmd/02-design-composition.qmd >}}
+
+{{< include qmd/03-sensitivity-power.qmd >}}
+
+{{< include qmd/04-games.qmd >}}
+
+{{< include qmd/05-manipulation-reproducibility.qmd >}}
