@@ -1,5 +1,3 @@
-# Analytical checks for the Benford equifinality benchmark
-BENFORD_THEORY_VERSION <- "2026-08-17-v1"
 
 first_digit_intervals <- function() {
   data.frame(
