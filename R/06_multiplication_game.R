@@ -1,7 +1,3 @@
-# Multiplication-game illustrations for the Benford equifinality paper
-# Static result: Morrison (2010/2012 arXiv version). Dynamic experiments below
-# are elementary extensions used only as controlled numerical illustrations.
-BENFORD_GAME_VERSION <- "2026-08-17-v1"
 
 .game_mod1 <- function(x) x %% 1
 
