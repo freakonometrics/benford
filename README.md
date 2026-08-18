@@ -37,9 +37,3 @@ All Monte Carlo seeds are fixed and printed in the rendered document.
 - `test.R`: smoke tests
 - `output/`: generated data, figures, and LaTeX tables (not versioned by default)
 - `.github/workflows/pages.yml`: manual GitHub Pages build/deployment
-
-## Website
-
-Once GitHub Pages is configured to use **GitHub Actions**, the workflow publishes the rendered analysis at:
-
-<https://freakonometrics.github.io/benford/>
