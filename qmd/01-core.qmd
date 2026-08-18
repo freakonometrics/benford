@@ -1,0 +1,87 @@
+```{r}
+#| label: setup
+#| echo: false
+source("R/01_generators.R")
+source("R/02_statistics.R")
+source("R/07_design_aware_tests.R")
+source("R/03_simulation_engine_v5.R")
+source("R/04_outputs.R")
+source("R/05_theory.R")
+source("R/06_multiplication_game.R")
+source("R/08_pass3_extensions.R")
+source("R/09_pass3_outputs.R")
+stopifnot(exists("design_aware_benford_tests",mode="function"));stopifnot(exists(".ensure_design_aware_summary",mode="function"));stopifnot(exists("design_aware_cvm_test",mode="function"));stopifnot(exists("run_marginal_power_experiment",mode="function"));require_output_packages()
+fig_dir<-"output/figures";tab_dir<-"output/tables";data_dir<-"output/data";dir.create(fig_dir,recursive=TRUE,showWarnings=FALSE);dir.create(tab_dir,recursive=TRUE,showWarnings=FALSE);dir.create(data_dir,recursive=TRUE,showWarnings=FALSE)
+primary_file<-file.path(data_dir,"primary_simulations_pass2_designaware.rds");sensitivity_file<-file.path(data_dir,"rho_sensitivity_pass2_designaware.rds");representative_file<-file.path(data_dir,"representative_samples_pass2.rds");manipulation_file<-file.path(data_dir,"manipulation_experiment_pass2.rds");composition_file<-file.path(data_dir,"mixture_composition_pass2_designaware.rds");game_static_file<-file.path(data_dir,"multiplication_game_static_v3.rds");game_washout_file<-file.path(data_dir,"multiplication_game_washout_v3.rds");game_mixing_file<-file.path(data_dir,"multiplication_game_mixing_v3.rds");pass3_design_file<-file.path(data_dir,"pass3_design_size_sensitivity.rds");pass3_cvm_file<-file.path(data_dir,"pass3_cvm_calibration.rds");pass3_power_file<-file.path(data_dir,"pass3_marginal_power.rds");pass3_boundary_file<-file.path(data_dir,"pass3_manipulation_boundary.rds")
+SEED_PRIMARY<-20260817L;SEED_SENSITIVITY<-20260818L;SEED_REPRESENTATIVE<-20260819L;SEED_MANIPULATION<-20260820L;SEED_AUC<-20260821L;SEED_COMPOSITION<-20260822L;SEED_GAME_STATIC<-20260831L;SEED_GAME_WASHOUT<-20260832L;SEED_GAME_MIXING<-20260833L;SEED_PASS3_DESIGN<-20260901L;SEED_PASS3_CVM<-20260902L;SEED_PASS3_POWER<-20260903L;SEED_PASS3_BOUNDARY<-20260904L
+cat("\n================ REPRODUCIBILITY SEEDS ================\n",sprintf("Primary simulations       : %d\n",SEED_PRIMARY),sprintf("Rho sensitivity           : %d\n",SEED_SENSITIVITY),sprintf("Representative samples    : %d\n",SEED_REPRESENTATIVE),sprintf("Manipulation experiment   : %d\n",SEED_MANIPULATION),sprintf("AUC bootstrap             : %d\n",SEED_AUC),sprintf("Mixture composition       : %d\n",SEED_COMPOSITION),sprintf("Multiplication game       : %d\n",SEED_GAME_STATIC),sprintf("Game: one-step washout    : %d\n",SEED_GAME_WASHOUT),sprintf("Game: non-Haar mixing     : %d\n",SEED_GAME_MIXING),sprintf("Pass 3: B/L sensitivity   : %d\n",SEED_PASS3_DESIGN),sprintf("Pass 3: CvM calibration   : %d\n",SEED_PASS3_CVM),sprintf("Pass 3: marginal power    : %d\n",SEED_PASS3_POWER),sprintf("Pass 3: boundary demo     : %d\n",SEED_PASS3_BOUNDARY),"=======================================================\n",sprintf("Engine version             : %s\n",BENFORD_ENGINE_VERSION),sprintf("Design module              : %s\n",BENFORD_DESIGN_VERSION),sprintf("Pass 3 module              : %s\n",BENFORD_PASS3_VERSION),sep="")
+```
+
+# Design
+
+The primary benchmark compares four processes whose population logarithmic significand \(U=\{\log_{10}X\}\) is exactly uniform on \([0,1)\). The latent-regime construction uses exactly half of the sequences in each conditional regime; a separate experiment below restores random sequence-level composition.
+
+```{r}
+#| label: design-table
+design_table<-make_design_table(params$n_seq,params$seq_len,params$rho,params$theta);knitr::kable(design_table,format="html");save_latex_table(design_table,file.path(tab_dir,"table_design.tex"),caption="Primary simulation design. All four constructions have an exact Benford population marginal; the latent-regime benchmark fixes the sequence composition at 50/50.",label="tab:design")
+```
+
+# Primary Monte Carlo experiment
+
+```{r}
+#| label: run-primary
+if(isTRUE(params$recompute)||!file.exists(primary_file)){primary<-run_primary_simulations(R=params$R_main,n_seq=params$n_seq,seq_len=params$seq_len,rho=params$rho,theta=params$theta,K_fourier=params$K_fourier,seed=SEED_PRIMARY,progress=TRUE);saveRDS(primary,primary_file)}else primary<-readRDS(primary_file)
+if(isTRUE(params$recompute)||!file.exists(representative_file)){representative<-make_representative_samples(n_seq=params$n_seq,seq_len=params$seq_len,rho=params$rho,theta=params$theta,seed=SEED_REPRESENTATIVE);saveRDS(representative,representative_file)}else representative<-readRDS(representative_file)
+```
+
+## Marginal first-digit agreement
+
+```{r}
+#| label: fig-first-digits
+#| fig-cap: "Representative first-digit frequencies. All four generators have the same exact population Benford marginal."
+#| fig-width: 9
+#| fig-height: 6
+p_digits<-plot_first_digits(representative);p_digits;ggplot2::ggsave(file.path(fig_dir,"figure_first_digits.pdf"),p_digits,width=9,height=6)
+```
+
+## Finite-sample behavior of the standard iid test
+
+The dashed line below is the conventional 5% critical value of a \(\chi^2_8\) reference law. The population first-digit probabilities are nevertheless exactly Benford in every construction.
+
+```{r}
+#| label: fig-chisq
+#| fig-cap: "Sampling distribution of the conventional first-digit chi-square statistic."
+#| fig-width: 8
+#| fig-height: 5
+p_chi<-plot_chisq_distribution(primary);p_chi;ggplot2::ggsave(file.path(fig_dir,"figure_chisq_sampling.pdf"),p_chi,width=8,height=5)
+```
+
+## Sequence information
+
+We use the complex first circular transition moment
+\[
+\widehat m_1=\frac{1}{N_{\mathrm{tr}}}\sum_{s,t}\exp\{2\pi i(U_{s,t+1}-U_{s,t})\}.
+\]
+The code subtracts the exact conditional expectation under a random permutation within each sequence.
+
+```{r}
+#| label: fig-transition
+#| fig-cap: "Centered circular transition coherence after exact within-sequence shuffle adjustment."
+#| fig-width: 8
+#| fig-height: 5
+p_trans<-plot_transition_coherence(primary);p_trans;ggplot2::ggsave(file.path(fig_dir,"figure_transition_coherence.pdf"),p_trans,width=8,height=5)
+```
+
+## Held-out summary table
+
+```{r}
+#| label: results-table
+results_table<-summarize_primary_results(primary);knitr::kable(results_table,format="html");save_latex_table(results_table,file.path(tab_dir,"table_primary_results.tex"),caption="Held-out Monte Carlo statistics. Entries are means with Monte Carlo standard deviations in parentheses, except the rejection rate.",label="tab:primary-results")
+```
+
+## Analytical check for the mean Pearson statistic
+
+```{r}
+#| label: chisq-theory-table
+chisq_theory<-make_chisq_theory_table(primary,rho=params$rho,theta=params$theta,seq_len=params$seq_len);knitr::kable(chisq_theory,digits=4,format="html");save_latex_table(chisq_theory,file.path(tab_dir,"table_chisq_theory.tex"),caption="Analytical expectation of the first-digit Pearson statistic and held-out Monte Carlo means.",label="tab:chisq-theory",digits=4)
+```
