@@ -1,0 +1,85 @@
+## Design-aware calibration of the same Pearson discrepancy
+
+The classical Pearson statistic is kept fixed; what changes is its reference law. Let \(\widehat p_8\) denote the first eight empirical digit proportions and let \(p_8\) denote their Benford targets. With the ninth cell determined by the unit-sum constraint,
+\[
+X_n^2=n(\widehat p_8-p_8)^\top A(\widehat p_8-p_8),\qquad A=\operatorname{diag}(p_1^{-1},\ldots,p_8^{-1})+p_9^{-1}\mathbf1\mathbf1^\top.
+\]
+The independent sequences provide a direct estimate of \(\Omega=\operatorname{Var}\{\sqrt n(\widehat p_8-p_8)\}\). We report first-order design-effect, second-order moment-matching, and sequence-aware Wald calibrations.
+
+```{r}
+#| label: design-aware-calibration-table
+calibration_table<-summarize_design_aware_calibration(primary);knitr::kable(calibration_table,digits=4,format="html");save_latex_table(calibration_table,file.path(tab_dir,"table_design_aware_calibration.tex"),caption="Monte Carlo rejection rates at nominal 5 percent under the iid Pearson reference and three sequence-aware calibrations.",label="tab:design-aware-calibration",digits=4)
+```
+
+```{r}
+#| label: fig-design-aware-calibration
+#| fig-cap: "Nominal 5% rejection rates before and after sequence-level design correction."
+#| fig-width: 9
+#| fig-height: 6
+p_cal<-plot_design_aware_rejection(primary);p_cal;ggplot2::ggsave(file.path(fig_dir,"figure_design_aware_calibration.pdf"),p_cal,width=9,height=6)
+```
+
+```{r}
+#| label: design-spectrum-table
+spectrum_table<-summarize_design_spectrum(primary);knitr::kable(spectrum_table,digits=4,format="html");save_latex_table(spectrum_table,file.path(tab_dir,"table_design_effect_spectrum.tex"),caption="Estimated sequence-level design-effect spectrum underlying the Pearson quadratic form.",label="tab:design-effect-spectrum",digits=4)
+```
+
+## Pairwise ordinal discrimination
+
+The signed effect is \(2\,\mathrm{AUC}-1\). Its sign records ordering; its magnitude records univariate separation across Monte Carlo replications.
+
+```{r}
+#| label: auc-table
+auc_table<-pairwise_auc_results(primary,statistics=c("chisq","cvm","B_K","C_centered"),B=params$auc_bootstrap,seed=SEED_AUC);auc_table$estimate<-sprintf("%.3f [%.3f, %.3f]",auc_table$effect,auc_table$lo,auc_table$hi);auc_display<-auc_table[,c("statistic","comparison","estimate")];auc_display$statistic<-c(chisq="chi-square",cvm="CvM",B_K="B(K)",C_centered="C centered")[auc_display$statistic];knitr::kable(auc_display,format="html");save_latex_table(auc_display,file.path(tab_dir,"table_pairwise_auc.tex"),caption="Signed pairwise AUC effects with percentile bootstrap intervals.",label="tab:pairwise-auc")
+```
+
+# Conditioning reveals the latent-regime construction
+
+The latent model uses \(U\mid Z=0\sim\mathrm{Beta}(2,1)\) and \(U\mid Z=1\sim\mathrm{Beta}(1,2)\). Exactly half of the sequences are assigned to each regime in the primary benchmark.
+
+```{r}
+#| label: fig-mixture
+#| fig-cap: "Non-Benford conditional regimes can pool to an exactly Benford population."
+#| fig-width: 9
+#| fig-height: 4
+p_mix<-plot_latent_mixture(representative$mixture);p_mix;ggplot2::ggsave(file.path(fig_dir,"figure_latent_mixture.pdf"),p_mix,width=9,height=4)
+```
+
+# Random cluster composition as a separate observation-design effect
+
+If sequence-level regimes are drawn independently, \(Z_s\stackrel{iid}{\sim}\mathrm{Bernoulli}(1/2)\), the superpopulation mixture remains exactly Benford but the realized fraction \(\widehat\pi\) fluctuates. Conditional on that realized composition,
+\[
+\widehat f(u)=1+2(\widehat\pi-1/2)(2u-1).
+\]
+
+```{r}
+#| label: run-composition
+if(isTRUE(params$recompute)||!file.exists(composition_file)){composition<-run_mixture_composition_simulations(R=params$R_composition,n_seq=params$n_seq,seq_len=params$seq_len,K_fourier=params$K_fourier,seed=SEED_COMPOSITION,progress=TRUE);saveRDS(composition,composition_file)}else composition<-readRDS(composition_file)
+composition_summary<-summarize_mixture_composition(composition);knitr::kable(composition_summary,digits=4,format="html");save_latex_table(composition_summary,file.path(tab_dir,"table_mixture_composition.tex"),caption="Balanced versus random sequence-level composition in the latent-regime construction.",label="tab:mixture-composition",digits=4)
+```
+
+```{r}
+#| label: mixture-composition-calibration-table
+composition_calibration<-summarize_mixture_composition_calibration(composition);knitr::kable(composition_calibration,digits=4,format="html");save_latex_table(composition_calibration,file.path(tab_dir,"table_mixture_composition_calibration.tex"),caption="Naive and design-aware rejection rates for fixed versus random latent-regime composition.",label="tab:mixture-composition-calibration",digits=4)
+```
+
+```{r}
+#| label: fig-mixture-composition-calibration
+#| fig-width: 9
+#| fig-height: 4.8
+p_comp_cal<-plot_mixture_composition_calibration(composition);p_comp_cal;ggplot2::ggsave(file.path(fig_dir,"figure_mixture_composition_calibration.pdf"),p_comp_cal,width=9,height=4.8)
+```
+
+```{r}
+#| label: fig-composition-chisq
+#| fig-width: 8
+#| fig-height: 4.8
+p_comp_chi<-plot_mixture_composition_chisq(composition);p_comp_chi;ggplot2::ggsave(file.path(fig_dir,"figure_mixture_composition_chisq.pdf"),p_comp_chi,width=8,height=4.8)
+```
+
+```{r}
+#| label: fig-composition-imbalance
+#| fig-width: 7
+#| fig-height: 4.8
+p_comp_imb<-plot_mixture_composition_imbalance(composition,n_total=params$n_seq*params$seq_len);p_comp_imb;ggplot2::ggsave(file.path(fig_dir,"figure_mixture_composition_imbalance.pdf"),p_comp_imb,width=7,height=4.8)
+```
