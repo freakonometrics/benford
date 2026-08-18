@@ -1,8 +1,3 @@
-# Design-aware calibration for first-digit Benford goodness-of-fit tests
-# Pass 2: sequence-level covariance estimation, Rao-Scott-style moment
-# corrections, and a sequence-aware Wald test.
-BENFORD_DESIGN_VERSION <- "2026-08-17-pass2-design-aware-v1"
-
 cluster_digit_proportions <- function(u) {
   u <- as.matrix(u); B <- nrow(u); L <- ncol(u)
   d <- matrix(first_digit_from_u(as.vector(u)), nrow = B, ncol = L)
